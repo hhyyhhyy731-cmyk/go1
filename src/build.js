@@ -97,6 +97,6 @@ for (const b of blocks) {
 
 const doc = new Document({
   styles: { default: { document: { run: { font: FONT, size: 20 } } } },
-  sections: [{ properties: { page: { margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN } } }, children: out }],
+  sections: [{ properties: { page: { margin: { top: Math.round(12 * MM), bottom: Math.round(12 * MM), left: MARGIN, right: MARGIN } } }, children: out }],
 });
 Packer.toBuffer(doc).then(buf => { fs.writeFileSync(process.argv[3], buf); console.log('docx written'); });

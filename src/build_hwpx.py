@@ -1,8 +1,10 @@
-"""usage: python3 build_hwpx.py out.hwpx  — content.py 블록을 한글(HWPX)로 출력"""
+"""usage: python3 build_hwpx.py out.hwpx [module]  — content.py(기본) 또는 notice.py 블록을 한글(HWPX)로 출력"""
 import sys
 import warnings
 from hwpx import HwpxDocument
-from content import blocks, BLUE
+import importlib
+from content import BLUE
+blocks = importlib.import_module(sys.argv[2] if len(sys.argv) > 2 else 'content').blocks
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
