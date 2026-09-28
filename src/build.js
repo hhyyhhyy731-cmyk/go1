@@ -74,6 +74,24 @@ for (const b of blocks) {
       ]), b.rows.map(r => r.h)));
       break;
     case 'grid': out.push(table(scale(b.widths), b.rows)); break;
+    case 'lined': {
+      const cw = Math.round(b.crit_w * MM), ws = [W - cw, cw];
+      const thin = { style: BorderStyle.SINGLE, size: 4, color: 'A6A6A6' };
+      const bd = { top: thin, bottom: thin, left: thin, right: thin };
+      const mk = (kids, w, fill) => new TableCell({
+        width: { size: w, type: WidthType.DXA }, borders: bd, verticalAlign: VerticalAlign.CENTER,
+        shading: fill ? { fill, type: ShadingType.CLEAR, color: 'auto' } : undefined,
+        margins: { top: 20, bottom: 20, left: 100, right: 100 }, children: kids,
+      });
+      const rows = [new TableRow({ children: [
+        mk([para(b.head, { size: 8, color: '7F7F7F', italic: true })], ws[0], 'F2F2F2'),
+        mk([para('기준', { size: 8, bold: true, align: 'center' })], ws[1], 'F2F2F2')] })];
+      for (let i = 0; i < b.n; i++) rows.push(new TableRow({
+        height: { value: Math.round(b.h * MM), rule: HeightRule.EXACT },
+        children: [mk([para('')], ws[0]), mk([para('')], ws[1])] }));
+      out.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: ws, rows }));
+      break;
+    }
   }
 }
 

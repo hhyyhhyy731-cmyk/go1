@@ -107,6 +107,15 @@ for b in blocks:
                   [r['h'] for r in b['rows']])
     elif k == 'grid':
         add_table(b['widths'], b['rows'])
+    elif k == 'lined':
+        cw = round(b['crit_w'] * MM)
+        rows = [[dict(lines=[dict(t=b['head'], size=8, color='7F7F7F', italic=True)], fill='F2F2F2'),
+                 dict(lines=['기준'], size=8, bold=True, align='center', fill='F2F2F2')]]
+        rows += [[dict(lines=[]), dict(lines=[])] for _ in range(b['n'])]
+        t = add_table([W - cw, cw], rows, [7] + [b['h']] * b['n'])
+        for r in range(len(rows)):
+            for c in range(2):
+                t.set_cell_borders(r, c, color='#A6A6A6')
 
 print(d.validate())
 d.save_to_path(sys.argv[1])
