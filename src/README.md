@@ -4,7 +4,6 @@
 
 ```bash
 python3 src/content.py blocks.json
-node src/build.js blocks.json 통합사회_수행평가_국민청원문_결정문.docx      # npm install docx
-python3 src/build_hwpx.py 통합사회_수행평가_국민청원문_결정문.hwpx        # pip install python-hwpx (src 폴더에서 실행)
-python3 src/build_hwpx.py 통합사회_수행평가_학생안내문.hwpx notice     # 학생 안내문 (내용: notice.py)
+node src/build.js blocks.json 통합사회_수행평가_전자청원문_결정문.docx      # npm install docx
+python3 src/build_hwpx.py 통합사회_수행평가_전자청원문_결정문.hwpx        # pip install python-hwpx (src 폴더에서 실행)
 ```

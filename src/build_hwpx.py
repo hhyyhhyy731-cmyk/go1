@@ -1,4 +1,4 @@
-"""usage: python3 build_hwpx.py out.hwpx [module]  — content.py(기본) 또는 notice.py 블록을 한글(HWPX)로 출력"""
+"""usage: python3 build_hwpx.py out.hwpx [module]  — content.py 블록을 한글(HWPX)로 출력"""
 import sys
 import warnings
 from hwpx import HwpxDocument
