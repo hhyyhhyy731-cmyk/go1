@@ -18,6 +18,7 @@ const ALIGN = { center: AlignmentType.CENTER, right: AlignmentType.RIGHT };
 
 const run = (t, f = {}) => new TextRun({
   text: t, font: FONT, size: Math.round((f.size || 10) * 2), bold: f.bold, italics: f.italic, color: f.color,
+  underline: f.u ? {} : undefined,
 });
 const para = (t, f = {}) => new Paragraph({
   alignment: ALIGN[f.align], spacing: { after: f.after ?? 40, before: f.before ?? 0 }, children: [run(t, f)],
@@ -86,9 +87,15 @@ for (const b of blocks) {
       const rows = [new TableRow({ children: [
         mk([para(b.head, { size: 8, color: '7F7F7F', italic: true })], ws[0], 'F2F2F2'),
         mk([para('기준', { size: 8, bold: true, align: 'center' })], ws[1], 'F2F2F2')] })];
-      for (let i = 0; i < b.n; i++) rows.push(new TableRow({
-        height: { value: Math.round(b.h * MM), rule: HeightRule.EXACT },
-        children: [mk([para('')], ws[0]), mk([para('')], ws[1])] }));
+      const filled = b.rows || [];   // 예시 답안: 줄마다 글 채우기 (밑줄 구간 포함)
+      for (let i = 0; i < b.n; i++) {
+        const row = filled[i];
+        const text = row ? new Paragraph({ children: row.segs.map(([t, u]) => run(t, { size: b.size || 9.5, color: b.color, u })) }) : para('');
+        const crit = para(row ? row.crit : '', { size: 9, bold: true, align: 'center' });
+        rows.push(new TableRow({
+          height: { value: Math.round(b.h * MM), rule: HeightRule.EXACT },
+          children: [mk([text], ws[0]), mk([crit], ws[1])] }));
+      }
       out.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: ws, rows }));
       break;
     }

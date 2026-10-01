@@ -7,3 +7,9 @@ python3 src/content.py blocks.json
 node src/build.js blocks.json 통합사회_수행평가_전자청원문_결정문.docx      # npm install docx
 python3 src/build_hwpx.py 통합사회_수행평가_전자청원문_결정문.hwpx        # pip install python-hwpx (src 폴더에서 실행)
 ```
+
+예시 답안(내용: `example.py`):
+
+```bash
+python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   # src 폴더에서 실행
+```

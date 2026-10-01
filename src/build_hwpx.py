@@ -19,10 +19,10 @@ d.set_page_margins(left=round(15 * MM), right=round(15 * MM), top=round(12 * MM)
 header = d.oxml.headers[0]
 
 _runs, _paras = {}, {}
-def run_style(size=10, bold=False, italic=False, color=None):
-    key = (size, bold, italic, color)
+def run_style(size=10, bold=False, italic=False, color=None, underline=False):
+    key = (size, bold, italic, color, underline)
     if key not in _runs:
-        _runs[key] = d.ensure_run_style(font=FONT, size=size, bold=bold, italic=italic,
+        _runs[key] = d.ensure_run_style(font=FONT, size=size, bold=bold, italic=italic, underline=underline,
                                         color=('#' + color) if color else None)
     return _runs[key]
 
@@ -113,11 +113,17 @@ for b in blocks:
         cw = round(b['crit_w'] * MM)
         rows = [[dict(lines=[dict(t=b['head'], size=8, color='7F7F7F', italic=True)], fill='F2F2F2'),
                  dict(lines=['기준'], size=8, bold=True, align='center', fill='F2F2F2')]]
-        rows += [[dict(lines=[]), dict(lines=[])] for _ in range(b['n'])]
+        filled = b.get('rows') or []
+        rows += [[dict(lines=[]), dict(lines=[filled[i]['crit']] if i < len(filled) else [], size=9, bold=True,
+                                       align='center')] for i in range(b['n'])]
         t = add_table([W - cw, cw], rows, [7] + [b['h']] * b['n'])
         for r in range(len(rows)):
             for c in range(2):
                 t.set_cell_borders(r, c, color='#A6A6A6')
+        for i, row in enumerate(filled):     # 예시 답안: 줄마다 글 채우기 (밑줄 구간 포함)
+            par = t.cell(i + 1, 0).paragraphs[0]
+            for text, u in row['segs']:
+                par.add_run(text, char_pr_id_ref=run_style(size=b.get('size', 9.5), color=b.get('color'), underline=u))
 
 print(d.validate())
 d.save_to_path(sys.argv[1])
