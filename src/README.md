@@ -21,5 +21,5 @@ python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   
 
 ```bash
 cd src
-python3 worksheet_hwpx.py template_기본권의유형.hwpx ../통합사회2_Ⅲ-1_자본주의와_경제체제_학습지.hwpx ws_economy1
+python3 worksheet_hwpx.py template_기본권의유형.hwpx ../통합사회2_Ⅲ-1_경제체제_비교_학습지.hwpx ws_economy1
 ```
