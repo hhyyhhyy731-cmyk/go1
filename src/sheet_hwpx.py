@@ -252,11 +252,15 @@ class Sheet:
             if part.startswith('[['):
                 ans, _, size = part[2:-2].partition('|')
                 self.blanks.append((self._sub, ans))
+                if size != 'c':
+                    pass
+                else:
+                    self.blanks.pop()          # 계산표 칸은 빈칸 정답표에 넣지 않는다
                 if self.teacher:
                     ans_char = self.C['ans_body'] if char in (self.C['body'], self.C['q']) else self.C['ans_cell']
-                    runs += [(char, '( '), (ans_char, ans), (char, ' )')]
+                    runs += [(ans_char, ans)] if size == 'c' else [(char, '( '), (ans_char, ans), (char, ' )')]
                 else:
-                    runs.append((char, BLANK_SHORT if size == 's' else BLANK_LONG))
+                    runs.append((char, '' if size == 'c' else BLANK_SHORT if size == 's' else BLANK_LONG))
             elif part.startswith('**'):
                 runs.append((bold or self.C['cell_b'], part[2:-2]))
             elif part.startswith('__'):
@@ -288,8 +292,9 @@ class Sheet:
                     size = cell.get('size', 9)
                     lines = max(1, math.ceil(sum(text_width(t, size) for _, t in runs) / max(inner, 1)))
                     cell_h += lines * size * 100 * 1.5
-                row_h = max(row_h, round(cell_h))
-                paras = ''.join(self.p_xml(ppid, runs) for ppid, runs in cell['paras'])
+                cell_h += cell.get('raw_h', 0)
+                row_h = max(row_h, round(cell_h), cell.get('min_h', 0))
+                paras = ''.join(self.p_xml(ppid, runs) for ppid, runs in cell['paras']) + cell.get('raw', '')
                 tcs.append((cell, paras, c, span, w))
                 c += span
                 self.plain.append(' '.join(''.join(t for _, t in p[1]) for p in cell['paras']))
@@ -479,7 +484,7 @@ class Sheet:
             ])
         self.table(widths, rows)
 
-    def question(self, n, q, circled='①②③④⑤'):
+    def question(self, n, q, circled='①②③④⑤', answer_box=True):
         """기출 한 문항 (현재 단 폭에 맞춤)"""
         self.para('q', [(self.C['q_no'], '%d.  ' % n)] + self.inline(q['stem'], self.C['q'], self.C['body_b'])
                   + [(self.C['q_src'], '  [%s]' % q['src'])])
@@ -497,6 +502,8 @@ class Sheet:
                 widths = [w - other * (n_col - 1)] + [other] * (n_col - 1)
             self._indented(lambda: self.grid(widths, head, rows, label_col=False, center=not q.get('grid_even') or q.get('grid_center', False),
                                              width=w))
+        if q.get('box_after'):
+            self._indented(lambda: self.box(q['box_after'], width=w))
         if q.get('bogi'):
             bf = self.h.border(LINE_BLACK, LINE_BLACK, LINE_BLACK, LINE_BLACK)
             paras = [(self.P['bogi_title'], [(self.C['passage_b'], '< 보 기 >')])]
@@ -504,7 +511,7 @@ class Sheet:
             self._indented(lambda: self.table([w], [[dict(bf=bf, va='TOP', paras=paras)]]))
         ch = q['choices']
         self._choices(ch, w, circled)
-        if self.teacher and q.get('ans'):
+        if self.teacher and q.get('ans') and answer_box:
             bf = self.h.border(LINE_BLACK, LINE_BLACK, LINE_BLACK, LINE_BLACK, FILL_LABEL)
             paras = [(self.P['boxed'], [(self.C['ans_box'], '정답  %s' % q['ans'])]),
                      (self.P['boxed'], self.inline(q.get('why', ''), self.C['why'], self.C['why_b']))]
@@ -523,6 +530,54 @@ class Sheet:
         for k, c in enumerate(ch):
             self.para('choice_last' if k == len(ch) - 1 else 'choice',
                       [(self.C['choice'], '%s ' % circled[k])] + self.inline(c, self.C['choice']))
+
+    # ── 문제 | 풀이 칸 ─────────────────────────────────────
+    def capture(self, fn, width):
+        """fn 이 만드는 문단들을 본문 대신 문자열로 받아 온다 (표 칸 안에 넣을 때)."""
+        start, old_w = len(self.body), self.width
+        self.width = width
+        fn()
+        xml = ''.join(self.body[start:])
+        del self.body[start:]
+        self.width = old_w
+        return xml
+
+    def problem(self, left_fn, solution=None, answer=None, sheet_fn=None, ratio=0.6, min_h=0):
+        """왼쪽 문제 | 오른쪽 풀이 칸 (1줄 표 하나 = 1문항).
+        left_fn   : 왼쪽 칸 내용을 그리는 함수 (question 등)
+        solution  : 교사용 풀이 줄 목록 (파랑), answer: 교사용 정답 (빨강)
+        sheet_fn  : 풀이 칸에 넣을 빈 계산표 등 (학생·교사 공통, 교사용은 정답이 채워짐)
+        """
+        lw = round(self.width * ratio)
+        rw = self.width - lw
+        left = self.capture(left_fn, lw - 2 * CELL_PAD_X)
+        right_paras = [(self.P['cell'], [(self.C['why_b'] if self.teacher else self.C['small'], '풀이')])]
+        right_raw = self.capture(sheet_fn, rw - 2 * CELL_PAD_X) if sheet_fn else ''
+        if self.teacher:
+            extra = [(self.P['cell_j'], self.inline(line, self.C['why'], self.C['why_b'])) for line in (solution or [])]
+            if answer:
+                extra.append((self.P['cell'], [(self.C['ans_box'], '정답  %s' % answer)]))
+            right_raw += ''.join(self.p_xml(pp, runs) for pp, runs in extra)
+        top = LINE_BLACK
+        bf_l = self.h.border(top, LINE_THIN, None, LINE_THIN)
+        bf_r = self.h.border(top, LINE_THIN, LINE_THIN, None)
+        est = left.count('<hp:p ') * 1450
+        self.table([lw, rw], [[dict(bf=bf_l, va='TOP', paras=[], raw=left, raw_h=est, min_h=min_h),
+                               dict(bf=bf_r, va='TOP', paras=right_paras, raw=right_raw)]])
+
+    def calc_sheet(self, rows, head=('대안', '편익', '명시적 비용', '순편익', '암묵적 비용', '기회비용', '판단')):
+        """기회비용 계산표. rows 칸에 [[정답]]을 쓰면 학생용은 빈칸, 교사용은 정답."""
+        n = len(head)
+        first = max(3800, self.width // (n + 1))
+        widths = [first] + [(self.width - first) // (n - 1)] * (n - 1)
+        widths[-1] = self.width - sum(widths[:-1])
+        cells = [[r[0]] + [self._calc_cell(v) for v in r[1:]] for r in rows]
+        self.grid(widths, list(head), cells, center=True, width=self.width)
+
+    def _calc_cell(self, v):
+        if isinstance(v, str) and v.startswith('?'):
+            return '[[%s|c]]' % v[1:]
+        return v
 
     def _indented(self, fn):
         """문항 안의 표·상자를 번호 폭만큼 들여 놓는다."""
