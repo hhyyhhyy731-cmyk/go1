@@ -14,12 +14,13 @@ python3 src/build_hwpx.py 통합사회_수행평가_전자청원문_결정문.hw
 python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   # src 폴더에서 실행
 ```
 
-## 단원별 보충 학습지 (「기본권의 유형」 서식)
+## 단원별 보충 학습지 (흑백 인쇄용)
 
-`template_기본권의유형.hwpx`의 글자·문단·표 서식을 그대로 쓰고 본문만 새로 만듭니다.
+한글 기본 빈 문서(`template_blank.hwpx`)에 글자·문단·표 서식을 새로 정의해 만듭니다.
+본문·문제는 함초롬바탕, 제목·표 항목은 함초롬돋움을 쓰고, 기출문제와 정답은 2단으로 배치합니다.
 내용은 단원별 모듈(`ws_economy1.py` 등)에서 고칩니다.
 
 ```bash
 cd src
-python3 worksheet_hwpx.py template_기본권의유형.hwpx ../통합사회2_Ⅲ-1_경제체제_비교_학습지.hwpx ws_economy1
+python3 sheet_hwpx.py ../통합사회2_Ⅲ-1_경제체제_비교_학습지.hwpx ws_economy1   # pip install python-hwpx (검증용, 선택)
 ```
