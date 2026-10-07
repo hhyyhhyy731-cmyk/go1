@@ -495,7 +495,9 @@ class Sheet:
         if q.get('grid'):
             head, rows = q['grid']
             n_col = len(head)
-            if q.get('grid_even'):
+            if q.get('grid_w'):
+                widths = q['grid_w']
+            elif q.get('grid_even'):
                 widths = [w // n_col] * n_col
             else:
                 other = 1900 if n_col > 4 else 3600
