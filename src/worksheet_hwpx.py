@@ -63,8 +63,35 @@ class Header:
         return self._clone('charPr', 'charProperties', base_id, edit)
 
 
+def print_style(xml, mono, scale):
+    """header.xml 의 글자 크기를 키우고, 흑백 인쇄에 맞게 색을 바꾼다."""
+    def char(m):
+        h = int(round(int(m.group(2)) * scale / 10.0)) * 10
+        return '<hh:charPr id="%s" height="%d" textColor="%s"' % (m.group(1), h, '#000000' if mono else m.group(3))
+    xml = re.sub(r'<hh:charPr id="(\d+)" height="(\d+)" textColor="([^"]+)"', char, xml)
+    # 글자가 커진 만큼 줄 간격도 넉넉하게 (최소 130%)
+    xml = re.sub(r'(<hh:lineSpacing type="PERCENT" value=")(\d+)"',
+                 lambda m: '%s%d"' % (m.group(1), max(int(m.group(2)), 130)), xml)
+    if not mono:
+        return xml
+
+    def border_fill(m):
+        el = m.group(0)
+        el = el.replace('#D8DFE6', '#7F7F7F').replace('#EAEFF3', '#A6A6A6')
+        el = re.sub(r'(Border type="SOLID" width="0\.[357] mm" color=")#[0-9A-Fa-f]{6}"', r'\g<1>#000000"', el)
+        def face(f):
+            c = f.group(1).upper()
+            if c in ('#FFFFFF',):
+                return f.group(0)
+            return 'faceColor="%s"' % ('#F2F2F2' if c == '#F7F9FB' else '#E0E0E0')
+        return re.sub(r'faceColor="(#[0-9A-Fa-f]{6})"', face, el)
+    return re.sub(r'<hh:borderFill id="\d+".*?</hh:borderFill>', border_fill, xml, flags=re.S)
+
+
 class Doc:
-    def __init__(self, template):
+    def __init__(self, template, print_mode=False, scale=1.0):
+        self.print_mode = print_mode   # 흑백 인쇄용: 글자 검정, 칠은 회색
+        self.scale = scale             # 글자 크기 배율
         z = zipfile.ZipFile(template)
         self.files = {n: z.read(n) for n in z.namelist()}
         self.order = z.namelist()
@@ -303,7 +330,10 @@ class Doc:
         sec = self.sec_head + ''.join(self.body) + '</hs:sec>'
         files = dict(self.files)
         files['Contents/section0.xml'] = sec.encode('utf-8')
-        files['Contents/header.xml'] = self.header.xml.encode('utf-8')
+        head = self.header.xml
+        if self.print_mode or self.scale != 1.0:
+            head = print_style(head, self.print_mode, self.scale)
+        files['Contents/header.xml'] = head.encode('utf-8')
         files['Preview/PrvText.txt'] = '\r\n'.join(self.plain)[:2000].encode('utf-16-le') \
             if self._prv_utf16() else '\r\n'.join(self.plain)[:2000].encode('utf-8')
         order = [n for n in self.order if n != 'Preview/PrvImage.png']
@@ -322,7 +352,8 @@ class Doc:
 
 if __name__ == '__main__':
     template, out, mod = sys.argv[1], sys.argv[2], sys.argv[3]
-    doc = Doc(template)
-    importlib.import_module(mod).build(doc)
+    m = importlib.import_module(mod)
+    doc = Doc(template, print_mode=getattr(m, 'PRINT_MODE', False), scale=getattr(m, 'SCALE', 1.0))
+    m.build(doc)
     doc.save(out)
     print('saved', out)
