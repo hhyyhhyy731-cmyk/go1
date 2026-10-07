@@ -1,7 +1,10 @@
 """흑백 인쇄용 학습지 HWPX 생성기 — 한글 기본 빈 문서(template_blank.hwpx)에 서식을 새로 정의해 쓴다.
 
-usage: python3 sheet_hwpx.py out.hwpx module
-  module : 내용 모듈 이름 (예: ws_economy1) — build(sheet) 함수를 가진 .py
+usage: python3 sheet_hwpx.py out.hwpx module [--teacher]
+  module    : 내용 모듈 이름 (예: ws_economy1) — build(sheet) 함수를 가진 .py
+  --teacher : 교사용 — 빈칸에 정답을 채우고, OX·기출 정답과 해설을 문항 바로 아래에 넣는다
+
+빈칸은 내용 안에 [[정답]] (긴 빈칸) 또는 [[정답|s]] (짧은 빈칸)로 쓴다.
 
 글꼴: 본문·문제는 함초롬바탕, 제목·표 항목은 함초롬돋움 (한글에 기본으로 들어 있는 글꼴)
 """
@@ -120,8 +123,15 @@ def text_width(t, size):
     return w
 
 
+BLANK_LONG = '(                )'
+BLANK_SHORT = '(            )'
+
+
 class Sheet:
-    def __init__(self):
+    def __init__(self, teacher=False):
+        self.teacher = teacher
+        self.blanks = []            # (소제목, 정답) — 학생용 정답표에 쓴다
+        self._sub = ''
         z = zipfile.ZipFile(TEMPLATE)
         self.files = {n: z.read(n) for n in z.namelist()}
         self.order = [n for n in z.namelist() if n != 'Preview/PrvImage.png']
@@ -160,6 +170,10 @@ class Sheet:
             choice=h.char(9.5), passage=h.char(9), passage_b=h.char(9, bold=True, font=DOTUM),
             passage_u=h.char(9, underline=True), ans=h.char(9.5, bold=True, font=DOTUM), page=h.char(8.5, font=DOTUM),
             id_box=h.char(9, font=DOTUM),
+            ans_cell=h.char(9, bold=True, font=DOTUM, underline=True),
+            ans_body=h.char(9.5, bold=True, font=DOTUM, underline=True),
+            why=h.char(8.5, font=DOTUM, color='#333333'), why_b=h.char(8.5, bold=True, font=DOTUM),
+            teacher=h.char(9, bold=True, font=DOTUM, color='#FFFFFF', shade='#000000'),
         )
         sec_line = h.border(bottom=('0.4 mm', '#000000'))
         self.P = dict(
@@ -217,12 +231,20 @@ class Sheet:
         return b
 
     def inline(self, t, char, bold=None, under=None):
-        """**굵게**, __밑줄__ 표시를 run 으로 나눈다."""
+        """**굵게**, __밑줄__, [[빈칸 정답]] 표시를 run 으로 나눈다."""
         if not isinstance(t, str):
             return t
         runs = []
-        for part in re.split(r'(\*\*.+?\*\*|__.+?__)', t):
-            if part.startswith('**'):
+        for part in re.split(r'(\*\*.+?\*\*|__.+?__|\[\[.+?\]\])', t):
+            if part.startswith('[['):
+                ans, _, size = part[2:-2].partition('|')
+                self.blanks.append((self._sub, ans))
+                if self.teacher:
+                    ans_char = self.C['ans_body'] if char in (self.C['body'], self.C['q']) else self.C['ans_cell']
+                    runs += [(char, '( '), (ans_char, ans), (char, ' )')]
+                else:
+                    runs.append((char, BLANK_SHORT if size == 's' else BLANK_LONG))
+            elif part.startswith('**'):
                 runs.append((bold or self.C['cell_b'], part[2:-2]))
             elif part.startswith('__'):
                 runs.append((under or self.C['cell_u'], part[2:-2]))
@@ -361,8 +383,12 @@ class Sheet:
         bf_t = self.h.border(('0.7 mm', '#000000'), ('0.25 mm', '#000000'), None, None)
         bf_id = self.h.border(('0.7 mm', '#000000'), ('0.25 mm', '#000000'), LINE_THIN, None)
         w_id = round(52 * MM)
+        title_runs = [(self.C['title'], title)]
+        if self.teacher:
+            title_runs.append((self.C['title'], '  '))
+            title_runs.append((self.C['teacher'], ' 교사용 · 정답 포함 '))
         self.table([TEXT_W - w_id, w_id], [[
-            dict(bf=bf_t, va='CENTER', size=19, paras=[(self.P['title'], [(self.C['title'], title)])]),
+            dict(bf=bf_t, va='CENTER', size=19, paras=[(self.P['title'], title_runs)]),
             dict(bf=bf_id, va='CENTER', paras=[(self.P['cell'], [(self.C['id_box'], '학번 :')]),
                                                (self.P['cell'], [(self.C['id_box'], '이름 :')])]),
         ]])
@@ -376,10 +402,21 @@ class Sheet:
         self.para('sec', [(self.C['sec_no'], ' %s ' % num), (self.C['sec'], '  ' + title)])
 
     def sub(self, title, desc=''):
+        self._sub = title
         runs = [(self.C['box_mark'], '■ '), (self.C['sub'], title)]
         if desc:
             runs.append((self.C['sub_desc'], '   ' + desc))
         self.para('sub', runs)
+
+    def blank_key(self):
+        """빈칸 정답을 소제목별로 묶은 표 행"""
+        rows = []
+        for sub, ans in self.blanks:
+            if rows and rows[-1][0] == sub:
+                rows[-1][1].append(ans)
+            else:
+                rows.append([sub, [ans]])
+        return [[sub, ' · '.join(a)] for sub, a in rows]
 
     def note(self, text):
         self.para('note', self.inline(text, self.C['note'], self.C['note']))
@@ -396,16 +433,22 @@ class Sheet:
                             (self.P['cell_j'], self.inline(desc, self.C['cell']))])])
         self.table(self.fit([num_w, self.width - num_w]), rows)
 
-    def quiz(self, items, widths, answer='(          )'):
-        """번호 | 문장 | 답칸"""
+    def quiz(self, items, widths, answer='(          )', answers=None, notes=None):
+        """번호 | 문장 | 답칸. 교사용이면 답칸에 정답, 문장 아래에 해설(notes)."""
         widths = self.fit(widths)
         R = len(items)
         rows = []
         for i, text in enumerate(items):
+            text_paras = [(self.P['cell_j'], self.inline(text, self.C['cell']))]
+            ans_runs = [(self.C['cell'], answer)]
+            if self.teacher and answers:
+                ans_runs = [(self.C['ans_cell'], answers[i])]
+                if notes and notes[i]:
+                    text_paras.append((self.P['cell_j'], [(self.C['why_b'], '→ '), (self.C['why'], notes[i])]))
             rows.append([
                 dict(bf=self.rule_bf(i, R, 0, 3, 'label'), paras=[(self.P['cell_c'], [(self.C['label'], str(i + 1))])]),
-                dict(bf=self.rule_bf(i, R, 1, 3), paras=[(self.P['cell_j'], self.inline(text, self.C['cell']))]),
-                dict(bf=self.rule_bf(i, R, 2, 3), paras=[(self.P['cell_c'], [(self.C['cell'], answer)])]),
+                dict(bf=self.rule_bf(i, R, 1, 3), paras=text_paras),
+                dict(bf=self.rule_bf(i, R, 2, 3), paras=[(self.P['cell_c'], ans_runs)]),
             ])
         self.table(widths, rows)
 
@@ -446,6 +489,14 @@ class Sheet:
             paras += [(self.P['boxed'], self.inline(t, self.C['passage'])) for t in q['bogi']]
             self._indented(lambda: self.table([w], [[dict(bf=bf, va='TOP', paras=paras)]]))
         ch = q['choices']
+        self._choices(ch, w, circled)
+        if self.teacher and q.get('ans'):
+            bf = self.h.border(LINE_BLACK, LINE_BLACK, LINE_BLACK, LINE_BLACK, FILL_LABEL)
+            paras = [(self.P['boxed'], [(self.C['passage_b'], '정답  %s' % q['ans'])]),
+                     (self.P['boxed'], self.inline(q.get('why', ''), self.C['why'], self.C['why_b']))]
+            self._indented(lambda: self.table([w], [[dict(bf=bf, va='TOP', paras=paras)]]))
+
+    def _choices(self, ch, w, circled):
         if max(len(c) for c in ch) <= 6:   # 짧은 선지는 한 줄에, 넘치면 3개·2개로 나눔
             items = ['%s %s' % (circled[k], c) for k, c in enumerate(ch)]
             gap = '    '
@@ -481,7 +532,7 @@ class Sheet:
 
 if __name__ == '__main__':
     out, mod = sys.argv[1], sys.argv[2]
-    sheet = Sheet()
+    sheet = Sheet(teacher='--teacher' in sys.argv[3:])
     importlib.import_module(mod).build(sheet)
     sheet.save(out)
     print('saved', out)

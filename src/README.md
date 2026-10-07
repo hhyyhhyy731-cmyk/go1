@@ -22,5 +22,9 @@ python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   
 
 ```bash
 cd src
-python3 sheet_hwpx.py ../통합사회2_Ⅲ-1_경제체제_비교_학습지.hwpx ws_economy1   # pip install python-hwpx (검증용, 선택)
+python3 sheet_hwpx.py ../통합사회2_Ⅲ-1_경제체제_비교_학습지.hwpx ws_economy1
+python3 sheet_hwpx.py ../통합사회2_Ⅲ-1_경제체제_비교_학습지_교사용.hwpx ws_economy1 --teacher
 ```
+
+빈칸은 내용 안에 `[[정답]]`(긴 빈칸)·`[[정답|s]]`(짧은 빈칸)로 씁니다. 학생용은 빈칸으로, 교사용은 정답을 채워 출력하고
+OX·판별 답과 해설, 기출 정답·해설을 문항 바로 아래에 넣습니다(교사용에는 별도 정답 쪽이 없습니다).
