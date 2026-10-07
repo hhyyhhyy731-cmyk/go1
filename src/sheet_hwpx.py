@@ -6,7 +6,7 @@ usage: python3 sheet_hwpx.py out.hwpx module [--teacher]
 
 빈칸은 내용 안에 [[정답]] (긴 빈칸) 또는 [[정답|s]] (짧은 빈칸)로 쓴다.
 
-글꼴: 본문·문제는 함초롬바탕, 제목·표 항목은 함초롬돋움 (한글에 기본으로 들어 있는 글꼴)
+글꼴: 모두 한컴산뜻돋움 (한글에 기본으로 들어 있는 글꼴)
 """
 import importlib
 import math
@@ -27,7 +27,9 @@ COL_GAP = round(8 * MM)
 COL_W = (TEXT_W - COL_GAP) // 2          # 2단일 때 한 단의 폭
 CELL_PAD_X, CELL_PAD_Y = 400, 220
 
-DOTUM, BATANG = 0, 1                     # header.xml 글꼴 번호
+FONT_NAME = '한컴산뜻돋움'
+DOTUM = BATANG = 2                       # header.xml 글꼴 번호 (빈 문서의 0·1 뒤에 한컴산뜻돋움을 2번으로 추가)
+RED, BLUE = '#D00000', '#1F4E9A'         # 교사용 정답·해설 색
 LINE_THIN = ('0.12 mm', '#808080')       # 표 안쪽 가는 회색 선
 LINE_BLACK = ('0.12 mm', '#000000')
 LINE_BOLD = ('0.4 mm', '#000000')        # 표 위아래 굵은 선
@@ -146,13 +148,23 @@ class Sheet:
                            % (round(5 * MM), round(8 * MM), MARGIN_LR, MARGIN_LR, round(10 * MM), round(8 * MM)),
                            first_run)
         self.first_run = first_run
-        self.h = Header(self.files['Contents/header.xml'].decode('utf-8'))
+        self.h = Header(self._add_font(self.files['Contents/header.xml'].decode('utf-8')))
         self.body, self.plain = [], []
         self._tbl_id = 1500000000
         self._break = False
         self._cols = 1
         self.width = TEXT_W
         self._styles()
+
+    @staticmethod
+    def _add_font(xml):
+        """모든 언어 글꼴 목록에 한컴산뜻돋움을 2번으로 추가한다."""
+        def add(m):
+            body = m.group(2)
+            info = re.search(r'<hh:typeInfo [^>]*/>', body).group(0)
+            body += '<hh:font id="2" face="%s" type="TTF" isEmbedded="0">%s</hh:font>' % (FONT_NAME, info)
+            return '<hh:fontface lang="%s" fontCnt="3">%s</hh:fontface>' % (m.group(1), body)
+        return re.sub(r'<hh:fontface lang="(\w+)" fontCnt="2">(.*?)</hh:fontface>', add, xml, flags=re.S)
 
     # ── 서식 정의 ───────────────────────────────────────────
     def _styles(self):
@@ -170,9 +182,10 @@ class Sheet:
             choice=h.char(9.5), passage=h.char(9), passage_b=h.char(9, bold=True, font=DOTUM),
             passage_u=h.char(9, underline=True), ans=h.char(9.5, bold=True, font=DOTUM), page=h.char(8.5, font=DOTUM),
             id_box=h.char(9, font=DOTUM),
-            ans_cell=h.char(9, bold=True, font=DOTUM, underline=True),
-            ans_body=h.char(9.5, bold=True, font=DOTUM, underline=True),
-            why=h.char(8.5, font=DOTUM, color='#333333'), why_b=h.char(8.5, bold=True, font=DOTUM),
+            ans_cell=h.char(9, bold=True, font=DOTUM, color=RED),
+            ans_body=h.char(9.5, bold=True, font=DOTUM, color=RED),
+            ans_box=h.char(9, bold=True, font=DOTUM, color=RED),
+            why=h.char(8.5, font=DOTUM, color=BLUE), why_b=h.char(8.5, bold=True, font=DOTUM, color=BLUE),
             teacher=h.char(9, bold=True, font=DOTUM, color='#FFFFFF', shade='#000000'),
         )
         sec_line = h.border(bottom=('0.4 mm', '#000000'))
@@ -336,7 +349,7 @@ class Sheet:
             cells = []
             for c, val in enumerate(row):
                 if c == 0 and label_col:
-                    pp = pp_of[aligns[c]] if aligns else ('cell_c' if center else 'cell')
+                    pp = pp_of[aligns[c]] if aligns else 'cell_c'
                     cells.append(dict(bf=self.rule_bf(r, R, c, C, 'label'), va='CENTER',
                                       paras=self.cell_paras(val, self.C['label'], pp)))
                 else:
@@ -386,13 +399,14 @@ class Sheet:
         title_runs = [(self.C['title'], title)]
         if self.teacher:
             title_runs.append((self.C['title'], '  '))
-            title_runs.append((self.C['teacher'], ' 교사용 · 정답 포함 '))
+            title_runs.append((self.C['ans_body'], '[교사용]'))
         self.table([TEXT_W - w_id, w_id], [[
             dict(bf=bf_t, va='CENTER', size=19, paras=[(self.P['title'], title_runs)]),
             dict(bf=bf_id, va='CENTER', paras=[(self.P['cell'], [(self.C['id_box'], '학번 :')]),
                                                (self.P['cell'], [(self.C['id_box'], '이름 :')])]),
         ]])
-        self.para('note', [(self.C['note'], intro)])
+        if intro:
+            self.para('note', [(self.C['note'], intro)])
 
     def section(self, num, title, page_break=False, columns=None):
         if page_break:
@@ -492,7 +506,7 @@ class Sheet:
         self._choices(ch, w, circled)
         if self.teacher and q.get('ans'):
             bf = self.h.border(LINE_BLACK, LINE_BLACK, LINE_BLACK, LINE_BLACK, FILL_LABEL)
-            paras = [(self.P['boxed'], [(self.C['passage_b'], '정답  %s' % q['ans'])]),
+            paras = [(self.P['boxed'], [(self.C['ans_box'], '정답  %s' % q['ans'])]),
                      (self.P['boxed'], self.inline(q.get('why', ''), self.C['why'], self.C['why_b']))]
             self._indented(lambda: self.table([w], [[dict(bf=bf, va='TOP', paras=paras)]]))
 

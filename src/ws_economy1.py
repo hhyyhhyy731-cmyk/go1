@@ -188,15 +188,17 @@ EXAMS = [
 CIRCLED = '①②③④⑤'
 
 
+TITLE = '1. 경제 체제 비교'
+
+
 def build(d):
     d.top('고촌고 1학년 통합사회2  ·  Ⅲ. 시장경제와 지속가능발전  ·  보충 학습지',
-          '1. 경제 체제 비교',
-          '빈칸을 채워 개념을 정리하고, 기출 질문 판별표로 시험에 나오는 질문을 익힌 뒤, OX와 기출문제로 확인하세요.')
+          '1. 경제 체제 비교', '')
 
     LW = 8000   # 항목 칸 폭
 
     # 01 개념 정리 ───────────────────────────────────────
-    d.section('01', '개념 정리 — 빈칸 채우기')
+    d.section('01', '개념 정리')
     d.sub('경제 체제', '기본적인 경제 문제를 해결하는 방식')
     d.para('body', '경제 체제란 기본적인 경제 문제를 해결하기 위한 제도나 [[방식|s]]이다.')
     d.grid([LW, 41000], None,
@@ -329,20 +331,5 @@ def build(d):
     # 06 기출 (2단) ────────────────────────────────────
     d.section('06', '기출문제로 확인하기', page_break=True)
     d.columns(2)
-    d.note('수능 · 모의평가 · 학력평가 경제 기출과 EBS 수능특강 경제 문항 중 고1 수준에 맞는 문항을 골랐습니다.')
     for i, q in enumerate(EXAMS):
         d.question(i + 1, q)
-
-    # 정답 (2단, 학생용만 — 교사용은 문항마다 정답이 들어 있다) ─────────
-    if d.teacher:
-        return
-    d.section('정답', '정답 및 해설', page_break=True, columns=1)
-    d.columns(2)
-    d.sub('01  개념 정리 빈칸')
-    d.grid([5200, 19000], None, d.blank_key())
-    d.sub('05  OX')
-    d.answers([(a, w) for _, a, w in OX], [1500, 1500, 21000])
-    d.sub('05  어느 경제 체제의 특징일까?')
-    d.grid([1500, 22500], None, [[str(i + 1), a] for i, (_, a) in enumerate(SORT)], center=False)
-    d.sub('06  기출문제')
-    d.answers([(q['ans'], q['why']) for q in EXAMS], [1500, 1500, 21000])
