@@ -248,12 +248,15 @@ class Sheet:
         if not isinstance(t, str):
             return t
         runs = []
+        self._inline_n = getattr(self, '_inline_n', 0) + 1
         for part in re.split(r'(\*\*.+?\*\*|__.+?__|\[\[.+?\]\])', t):
             if part.startswith('[['):
                 ans, _, size = part[2:-2].partition('|')
                 self.blanks.append((self._sub, ans))
                 if size != 'c':
-                    pass
+                    if not hasattr(self, 'blank_src'):
+                        self.blank_src = []
+                    self.blank_src.append((self._inline_n, ans, t))   # 교사용 변환에서 위치 대조용
                 else:
                     self.blanks.pop()          # 계산표 칸은 빈칸 정답표에 넣지 않는다
                 if self.teacher:
