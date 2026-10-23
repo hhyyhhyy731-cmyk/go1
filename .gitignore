@@ -1,3 +1,4 @@
 # 학생 개인정보(이름·점수)는 저장소에 올리지 않음
 grading/grades_*.py
 *채점표*.xlsx
+__pycache__/
