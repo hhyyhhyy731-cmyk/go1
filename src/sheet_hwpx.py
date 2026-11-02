@@ -519,7 +519,10 @@ class Sheet:
         if self.teacher and q.get('ans') and answer_box:
             bf = self.h.border(LINE_BLACK, LINE_BLACK, LINE_BLACK, LINE_BLACK, FILL_LABEL)
             paras = [(self.P['boxed'], [(self.C['ans_box'], '정답  %s' % q['ans'])]),
-                     (self.P['boxed'], self.inline(q.get('why', ''), self.C['why'], self.C['why_b']))]
+                     ]
+            whys = q.get('why', '')
+            for line in (whys if isinstance(whys, list) else [whys]):
+                paras.append((self.P['boxed'], self.inline(line, self.C['why'], self.C['why_b'])))
             self._indented(lambda: self.table([w], [[dict(bf=bf, va='TOP', paras=paras)]]))
 
     def _choices(self, ch, w, circled):
