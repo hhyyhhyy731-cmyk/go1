@@ -570,7 +570,7 @@ class Sheet:
         self.table([lw, rw], [[dict(bf=bf_l, va='TOP', paras=[], raw=left, raw_h=est, min_h=min_h),
                                dict(bf=bf_r, va='TOP', paras=right_paras, raw=right_raw)]])
 
-    def calc_sheet(self, rows, head=('대안', '편익', '명시적 비용', '편익 − 명시적 비용', '암묵적 비용', '기회비용', '순편익 (판단)')):
+    def calc_sheet(self, rows, head=('대안', '편익', '명시적 비용', '남는 이득 (편익−명시적)', '암묵적 비용', '기회비용', '순편익 (판단)')):
         """기회비용 계산표. rows 칸에 [[정답]]을 쓰면 학생용은 빈칸, 교사용은 정답."""
         n = len(head)
         first = max(3800, self.width // (n + 1))
