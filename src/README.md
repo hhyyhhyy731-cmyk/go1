@@ -13,3 +13,12 @@ python3 src/build_hwpx.py 통합사회_수행평가_전자청원문_결정문.hw
 ```bash
 python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   # src 폴더에서 실행
 ```
+
+1학년 사회 불평등 수행평가(내용: `inequality.py`, 안내문: `inequality_notice.py`):
+
+```bash
+python3 src/inequality.py blocks.json && node src/build.js blocks.json 1학년_통합사회_사회불평등_수행평가지.docx
+python3 src/inequality_notice.py blocks.json && node src/build.js blocks.json 1학년_통합사회_사회불평등_안내문.docx
+python3 src/build_hwpx.py 1학년_통합사회_사회불평등_수행평가지.hwpx inequality        # src 폴더에서 실행
+python3 src/build_hwpx.py 1학년_통합사회_사회불평등_안내문.hwpx inequality_notice     # src 폴더에서 실행
+```
