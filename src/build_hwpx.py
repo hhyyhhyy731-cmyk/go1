@@ -8,7 +8,8 @@ blocks = importlib.import_module(sys.argv[2] if len(sys.argv) > 2 else 'content'
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
-FONT = '맑은 고딕'
+import os
+FONT = os.environ.get('FORM_FONT', '맑은 고딕')
 MM = 283.465              # HWPUNIT per mm
 W = round(180 * MM)       # A4 210mm - 15mm x 2
 LABEL_W = round(40 * MM)
@@ -109,6 +110,8 @@ for b in blocks:
                   [r['h'] for r in b['rows']])
     elif k == 'grid':
         add_table(b['widths'], b['rows'])
+    elif k == 'rules':      # 기준 칸 없이 줄만 그은 작성 칸
+        add_table([W], [[dict(lines=[])] for _ in range(b['n'])], [b['h']] * b['n'])
     elif k == 'lined':
         cw = round(b['crit_w'] * MM)
         rows = [[dict(lines=[dict(t=b['head'], size=8, color='7F7F7F', italic=True)], fill='F2F2F2'),

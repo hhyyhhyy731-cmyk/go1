@@ -6,7 +6,7 @@ const {
 } = require('docx');
 
 const blocks = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const FONT = '맑은 고딕';
+const FONT = process.env.FORM_FONT || '맑은 고딕';
 const MM = 56.7;                 // DXA per mm
 const MARGIN = Math.round(15 * MM);
 const W = Math.round(180 * MM);  // A4 210mm - 15mm x 2
@@ -75,6 +75,16 @@ for (const b of blocks) {
       ]), b.rows.map(r => r.h)));
       break;
     case 'grid': out.push(table(scale(b.widths), b.rows)); break;
+    case 'rules': {   // 기준 칸 없이 줄만 그은 작성 칸
+      const thin = { style: BorderStyle.SINGLE, size: 4, color: '808080' };
+      const bd = { top: thin, bottom: thin, left: thin, right: thin };
+      const rows = [];
+      for (let i = 0; i < b.n; i++) rows.push(new TableRow({
+        height: { value: Math.round(b.h * MM), rule: HeightRule.EXACT },
+        children: [new TableCell({ width: { size: W, type: WidthType.DXA }, borders: bd, children: [para('')] })] }));
+      out.push(new Table({ width: { size: W, type: WidthType.DXA }, columnWidths: [W], rows }));
+      break;
+    }
     case 'lined': {
       const cw = Math.round(b.crit_w * MM), ws = [W - cw, cw];
       const thin = { style: BorderStyle.SINGLE, size: 4, color: 'A6A6A6' };
