@@ -10,6 +10,7 @@ warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 import os
 FONT = os.environ.get('FORM_FONT', '맑은 고딕')
+LINE = int(os.environ['FORM_LINE']) if os.environ.get('FORM_LINE') else None   # 줄 간격(%) — 없으면 한글 기본값
 MM = 283.465              # HWPUNIT per mm
 W = round(180 * MM)       # A4 210mm - 15mm x 2
 LABEL_W = round(40 * MM)
@@ -32,7 +33,8 @@ def para_style(align=None, before=0, after=1.5):
     if key not in _paras:
         _paras[key] = header.ensure_paragraph_format(
             alignment={'center': 'CENTER', 'right': 'RIGHT'}.get(align, 'JUSTIFY'),
-            margins={'prev': round(before * 100), 'next': round(after * 100)})
+            margins={'prev': round(before * 100), 'next': round(after * 100)},
+            line_spacing_percent=LINE)
     return _paras[key]
 
 pending_break = False

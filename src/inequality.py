@@ -58,8 +58,8 @@ CASES = [
 def plain(t, **o):
     return c(t, **o)
 
-def head(t):
-    return c(t, bold=True, align='center')
+def head(t, size=9):
+    return c(t, bold=True, align='center', size=size)
 
 # ───────── 1장: 수행평가지 (제출) ─────────
 p('1학년      반      번   이름 :                    ', align='right', size=10, after=6)
@@ -83,39 +83,39 @@ blocks.append(dict(k='rules', n=19, h=9))
 brk()
 
 # ───────── 2장: 참고자료 (보면서 쓰기, 제출하지 않음) ─────────
-p('[참고자료] 사회 불평등 사례와 두 가지 정의관', bold=True, size=15, align='center', after=2)
-p('글을 쓸 때 참고하세요. 이 종이는 제출하지 않습니다.', size=9, align='center', after=8)
-p('1. 우리 사회의 불평등 사례', bold=True, size=11.5, after=3)
+p('[참고자료] 사회 불평등 사례와 두 가지 정의관', bold=True, size=14, align='center', after=1)
+p('글을 쓸 때 참고하세요. 이 종이는 제출하지 않습니다.', size=8.5, align='center', after=5)
+p('1. 우리 사회의 불평등 사례', bold=True, size=10.5, after=2)
 rows = [[head('사례'), head('현황'), head('원인')]]
 for k, nm, now, cause in CASES:
-    rows.append([c([f'{k}. ' + nm[0]] + nm[1:], bold=True, align='center', size=9),
-                 c(now, size=8.5), c(cause, size=8.5)])
+    rows.append([c([f'{k}. ' + nm[0]] + nm[1:], bold=True, align='center', size=8),
+                 c(now, size=7.5), c(cause, size=7.5)])
 grid([1.7, 6.2, 3.6], rows)
 p('※ 수치는 통계청, 교육부, OECD 등의 자료를 바탕으로 한 대략적인 값입니다. 여기에 없는 사례를 골라도 됩니다.',
-  size=8, before=2)
+  size=7, before=1)
 
-p('2. 자유주의와 공동체주의 정의관', bold=True, size=11.5, before=8, after=3)
+p('2. 자유주의와 공동체주의 정의관', bold=True, size=10.5, before=5, after=2)
 grid([1.6, 4.2, 4.2], [
     [head(''), head('자유주의 정의관'), head('공동체주의 정의관')],
     [head(['중요하게', '여기는 것']),
-     c(['개인의 자유와 권리, 공정한 경쟁과 절차,', '자신의 선택에 대한 책임'], align='center', size=9),
-     c(['공동선(모두에게 좋은 것), 구성원 사이의', '연대와 서로에 대한 책임'], align='center', size=9)],
+     c(['개인의 자유와 권리, 공정한 경쟁과 절차,', '자신의 선택에 대한 책임'], align='center', size=8),
+     c(['공동선(모두에게 좋은 것), 구성원 사이의', '연대와 서로에 대한 책임'], align='center', size=8)],
     [head(['불평등을', '바라보는 관점']),
-     c(['공정한 규칙에 따라 생긴 차이는 어느 정도 인정한다.', '다만 기회는 누구에게나 공정하게 주어져야 한다.'], align='center', size=9),
-     c(['불평등은 공동체 전체가 함께 해결할 문제이다.', '어려운 구성원을 공동체가 돌보아야 한다.'], align='center', size=9)],
+     c(['공정한 규칙에 따라 생긴 차이는 어느 정도 인정한다.', '다만 기회는 누구에게나 공정하게 주어져야 한다.'], align='center', size=8),
+     c(['불평등은 공동체 전체가 함께 해결할 문제이다.', '어려운 구성원을 공동체가 돌보아야 한다.'], align='center', size=8)],
     [head(['해결 방향']),
-     c(['기회의 평등 보장, 공정한 경쟁 규칙 마련,', '스스로 노력할 수 있도록 돕는 지원'], align='center', size=9),
-     c(['연대와 나눔, 지역 공동체의 협력,', '사회적 약자를 위한 적극적인 복지'], align='center', size=9)],
+     c(['기회의 평등 보장, 공정한 경쟁 규칙 마련,', '스스로 노력할 수 있도록 돕는 지원'], align='center', size=8),
+     c(['연대와 나눔, 지역 공동체의 협력,', '사회적 약자를 위한 적극적인 복지'], align='center', size=8)],
 ])
 
-p('3. 해결 방안 예시', bold=True, size=11.5, before=8, after=3)
+p('3. 해결 방안 예시', bold=True, size=10.5, before=5, after=2)
 grid([1.6, 8.4], [
     [head(['제도적 방안']),
      c('공공기관·기업의 지방 이전, 비정규직 차별 금지, 공공 의료원 확대, 노인 디지털 교육, 교육비 지원, '
-       '육아휴직 확대, 기초연금 확대, 장애인 의무고용 강화, 농어촌 버스 노선 확충 등', size=9)],
+       '육아휴직 확대, 기초연금 확대, 장애인 의무고용 강화, 농어촌 버스 노선 확충 등', size=8)],
     [head(['실천 방안']),
      c('지역 상품 이용하기, 봉사 활동, 어르신께 키오스크 사용법 알려 드리기, 차별하는 말 쓰지 않기, '
-       '관심 있는 문제에 대해 청원이나 캠페인에 참여하기 등', size=9)],
+       '관심 있는 문제에 대해 청원이나 캠페인에 참여하기 등', size=8)],
 ])
 
 if __name__ == '__main__':

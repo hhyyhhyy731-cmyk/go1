@@ -19,6 +19,6 @@ python3 src/build_hwpx.py 통합사회_수행평가_예시답안.hwpx example   
 ```bash
 python3 src/inequality.py blocks.json && FORM_FONT=함초롬바탕 node src/build.js blocks.json 1학년_통합사회_사회불평등_수행평가지.docx
 python3 src/inequality_notice.py blocks.json && FORM_FONT=함초롬바탕 node src/build.js blocks.json 1학년_통합사회_사회불평등_안내문.docx
-FORM_FONT=함초롬바탕 python3 src/build_hwpx.py 1학년_통합사회_사회불평등_수행평가지.hwpx inequality        # src 폴더에서 실행
-FORM_FONT=함초롬바탕 python3 src/build_hwpx.py 1학년_통합사회_사회불평등_안내문.hwpx inequality_notice     # src 폴더에서 실행
+FORM_FONT=함초롬바탕 FORM_LINE=130 python3 src/build_hwpx.py 1학년_통합사회_사회불평등_수행평가지.hwpx inequality        # src 폴더에서 실행
+FORM_FONT=함초롬바탕 FORM_LINE=130 python3 src/build_hwpx.py 1학년_통합사회_사회불평등_안내문.hwpx inequality_notice     # src 폴더에서 실행
 ```
